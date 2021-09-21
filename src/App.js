@@ -40,7 +40,7 @@ export default function App() {
   }, [page, searchValue]);
 
   const onHandleSearch = searchValue => {
-    // this.setState({ images: [] });
+    setImages([]);
     setPage(1);
     setSearchValue(searchValue);
   };
