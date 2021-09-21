@@ -31,12 +31,14 @@ export default function App() {
       apiService(searchValue, page)
         .then(respons => setImages(images => [...images, ...respons.hits]))
         .catch(error => toast.error(`${error}`))
-        .finally(setLoading(false));
+        .finally(() => {
+          setLoading(false);
+          window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth',
+          });
+        });
     }, 1000);
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth',
-    });
   }, [page, searchValue]);
 
   const onHandleSearch = searchValue => {
@@ -62,6 +64,7 @@ export default function App() {
   return (
     <div className="App">
       <Searchbar onSubmit={onHandleSearch} />
+      <ImageGallery images={images} onClick={openModal} />
       <Loader
         className="Loader"
         visible={loading}
@@ -70,9 +73,6 @@ export default function App() {
         height={200}
         width={200}
       />
-
-      <ImageGallery images={images} onClick={openModal} />
-
       {images.length > 0 && (
         <div>
           <Button onClick={onLoadMore} />
