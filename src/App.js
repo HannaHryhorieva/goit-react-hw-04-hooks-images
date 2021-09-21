@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+// import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
@@ -12,96 +13,75 @@ import Loader from 'react-loader-spinner';
 import Modal from './components/Modal/Modal';
 import apiService from './apiServiсe/apiService';
 
-class App extends Component {
-  state = {
-    page: 1,
-    searchValue: '',
-    images: [],
-    loading: false,
-    showModal: false,
-    largeImageURL: '',
-    tags: '',
-  };
-  componentDidUpdate(prevProps, prevState) {
-    const searchValue = this.state.searchValue;
-    const page = this.state.page;
-    if (prevState.searchValue !== searchValue) {
-      this.setState({ loading: true });
-      setTimeout(() => {
-        apiService(searchValue, page)
-          .then(respons => this.setState({ images: respons.hits }))
-          .catch(error => toast.error(`${error}`))
-          .finally(this.setState({ loading: false }));
-      }, 1000);
+export default function App() {
+  const [page, setPage] = useState(1);
+  const [searchValue, setSearchValue] = useState('');
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [tags, setTags] = useState('false');
+
+  useEffect(() => {
+    if (searchValue === '') {
+      return;
     }
-    if (prevState.page !== page) {
-      this.setState({ loading: true });
+    setLoading(true);
+    setTimeout(() => {
       apiService(searchValue, page)
-        .then(respons =>
-          this.setState({ images: [...this.state.images, ...respons.hits] }),
-        )
+        .then(respons => setImages(images => [...images, ...respons.hits]))
         .catch(error => toast.error(`${error}`))
-        .finally(this.setState({ loading: false }));
-    }
+        .finally(setLoading(false));
+    }, 1000);
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: 'smooth',
     });
-  }
-  onHandleSearch = searchValue => {
+  }, [page, searchValue]);
+
+  const onHandleSearch = searchValue => {
     // this.setState({ images: [] });
-    this.setState({ page: 1 });
-    this.setState({ searchValue });
-  };
-  onLoadMore = () => {
-    this.setState({ page: this.state.page + 1 });
-  };
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+    setPage(1);
+    setSearchValue(searchValue);
   };
 
-  openModal = e => {
-    this.toggleModal();
+  const onLoadMore = () => {
+    setPage(page => page + 1);
+  };
+  const toggleModal = () => {
+    setShowModal(showModal => !showModal);
+  };
+  const openModal = e => {
+    toggleModal();
     const idImage = Number(e.target.id);
-    const image = this.state.images.find(image => image.id === idImage);
+    const image = images.find(image => image.id === idImage);
 
-    this.setState({ largeImageURL: image.largeImageURL });
-    this.setState({ tags: image.tags });
+    setLargeImageURL(image.largeImageURL);
+    setTags(image.tags);
   };
+  return (
+    <div className="App">
+      <Searchbar onSubmit={onHandleSearch} />
+      <Loader
+        className="Loader"
+        visible={loading}
+        type="Grid"
+        color="#3f51b5"
+        height={200}
+        width={200}
+      />
 
-  render() {
-    return (
-      <div className="App">
-        <Searchbar onSubmit={this.onHandleSearch} />
-        <Loader
-          className="Loader"
-          visible={this.state.loading}
-          type="Grid"
-          color="#3f51b5"
-          height={200}
-          width={200}
-        />
+      <ImageGallery images={images} onClick={openModal} />
 
-        <ImageGallery images={this.state.images} onClick={this.openModal} />
-
-        {this.state.images.length > 0 && (
-          <div>
-            <Button onClick={this.onLoadMore} />
-          </div>
-        )}
-        {this.state.showModal && (
-          <Modal
-            imageUrl={this.state.largeImageURL}
-            tags={this.state.tags}
-            onClose={this.toggleModal}
-          />
-        )}
-        <ToastContainer autoClose={2000} />
-      </div>
-    );
-  }
+      {images.length > 0 && (
+        <div>
+          <Button onClick={onLoadMore} />
+        </div>
+      )}
+      {showModal && (
+        <Modal imageUrl={largeImageURL} tags={tags} onClose={toggleModal} />
+      )}
+      <ToastContainer autoClose={2000} />
+    </div>
+  );
 }
-
-export default App;
